@@ -22,7 +22,7 @@ namespace TAMKShooter
 		public UnitType Type { get { return _type; } }
 		public PlayerData Data { get; private set; }
         public float InvulnerabilityTime;
-        private float _invulnerabilitytimer;
+        private bool Invulnerable;
         private float _flickTimer;
         private MeshRenderer _renderer;
         private GameObject _spawnPoint;
@@ -48,7 +48,7 @@ namespace TAMKShooter
             {
                 Debug.Log("Player1 is going to die 3 times during next 10 seconds");
                 StartCoroutine(death(2f));
-                StartCoroutine(death(5f));
+                StartCoroutine(death(6f));
                 StartCoroutine(death(10f));
             }
             
@@ -74,8 +74,9 @@ namespace TAMKShooter
 
             if (Data.Lives > 0)
             {
-                transform.position = _spawnPoint.transform.position;                
-                _invulnerabilitytimer = InvulnerabilityTime;
+                transform.position = _spawnPoint.transform.position;
+                StartCoroutine(invulnerabilitytimer());
+                Invulnerable = true;
                 _flickTimer = 0.2f;
             } else
             {
@@ -83,9 +84,18 @@ namespace TAMKShooter
             }				
 		}
 
+        private IEnumerator invulnerabilitytimer()
+        {
+            yield return new WaitForSeconds(InvulnerabilityTime);
+            Invulnerable = false;
+            _renderer.enabled = true;
+        }
+        
+
+
         private void Update()
         {
-            if (_invulnerabilitytimer > 0)
+            if (Invulnerable)
             {
                 if (_flickTimer < 0)
                 {
@@ -96,13 +106,8 @@ namespace TAMKShooter
 
                     _flickTimer = 0.2f;
                 }
-
-                _invulnerabilitytimer -= Time.deltaTime;
                 _flickTimer -= Time.deltaTime;
-            } else
-            {
-                _renderer.enabled = true;
-            }
+            } 
 
             
         }
@@ -121,7 +126,9 @@ namespace TAMKShooter
             if (other.tag == "Enemy")
             {
                 other.gameObject.SetActive(false);
-                Die();
+
+                if (!Invulnerable)
+                    Die();
             }
         }
     }
